@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NGINX with Fluentd + OpenSearch Logging Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #log-output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>NGINX with Fluentd + OpenSearch Logging Demo</h1>
+    <p>This is a demo page for the HSF Conditions Database logging project.</p>
+    <p>Use the buttons below to generate different types of log entries:</p>
+    
+    <div class="button-container">
+        <button onclick="generateNormalLog()">Generate Normal Log</button>
+        <button onclick="generateWarningLog()">Generate Warning Log</button>
+        <button onclick="generateErrorLog()">Generate Error Log</button>
+        <button onclick="generateMultipleLogs()">Generate Multiple Logs</button>
+    </div>
+    
+    <div id="log-output">
+        <p>Log actions will appear here...</p>
+    </div>
+    
+    <p>Check OpenSearch Dashboards at <a href="http://localhost:5601">http://localhost:5601</a> to see the logs.</p>
+    
+    <script>
+        const logOutput = document.getElementById('log-output');
+        
+        function appendLogMessage(message) {
+            const timestamp = new Date().toISOString();
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `${timestamp}: ${message}`;
+            logOutput.appendChild(logEntry);
+        }
+        
+        function generateNormalLog() {
+            fetch('/normal-log')
+                .then(response => {
+                    appendLogMessage('Generated normal log entry');
+                })
+                .catch(error => {
+                    appendLogMessage('Error generating log: ' + error);
+                });
+        }
+        
+        function generateWarningLog() {
+            fetch('/warning-log')
+                .then(response => {
+                    appendLogMessage('Generated warning log entry');
+                })
+                .catch(error => {
+                    appendLogMessage('Error generating log: ' + error);
+                });
+        }
+        
+        function generateErrorLog() {
+            fetch('/error-log')
+                .then(response => {
+                    appendLogMessage('Generated error log entry');
+                })
+                .catch(error => {
+                    appendLogMessage('Error generating log: ' + error);
+                });
+        }
+        
+        function generateMultipleLogs() {
+            appendLogMessage('Generating multiple log entries...');
+            
+            // Generate 5 logs with different patterns
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const endpoints = ['/normal-log', '/warning-log', '/error-log'];
+                    const randomEndpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
+                    
+                    fetch(randomEndpoint)
+                        .then(() => {
+                            appendLogMessage(`Generated log entry ${i+1}/5`);
+                        })
+                        .catch(error => {
+                            appendLogMessage('Error generating log: ' + error);
+                        });
+                }, i * 500);
+            }
+        }
+    </script>
+</body>
+</html> 
