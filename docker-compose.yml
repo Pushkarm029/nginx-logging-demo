@@ -1,37 +1,6 @@
 version: '3'
 
 services:
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/html:/usr/share/nginx/html:ro
-      - nginx_logs:/var/log/nginx
-    networks:
-      - logging_network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  fluentd:
-    build:
-      context: ./fluentd
-    volumes:
-      - ./fluentd/conf:/fluentd/etc
-      - ./fluentd/pos:/fluentd/pos
-      - nginx_logs:/var/log/nginx:ro
-    ports:
-      - "24224:24224"
-      - "24224:24224/udp"
-    networks:
-      - logging_network
-    depends_on:
-      - opensearch
-
   opensearch:
     image: opensearchproject/opensearch:2.11.0
     environment:
@@ -67,10 +36,42 @@ services:
     depends_on:
       - opensearch
 
+  fluentd:
+    build:
+      context: "./fluentd"
+      dockerfile: "./fluentd/Dockerfile"
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    networks:
+      - logging_network
+    volumes:
+      - ./fluentd/conf:/fluentd/etc
+      - ./fluentd/pos:/fluentd/pos
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+    networks:
+      - logging_network
+    depends_on:
+      - opensearch
+      - fluentd
+    links:
+      - fluentd
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: 127.0.0.1:24224
+        tag: httpd.access
+        fluentd-async: "true"
+
 networks:
   logging_network:
-    driver: bridge
 
 volumes:
-  nginx_logs:
   opensearch_data:
